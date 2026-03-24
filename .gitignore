@@ -1,0 +1,30 @@
+# Environment variables — NEVER commit these!
+.env
+*.env
+.env.local
+.env.production
+
+# Spring Boot local config overrides
+application-local.yml
+**/application-local.yml
+
+# Maven build output
+target/
+**/target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+*.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node / React
+node_modules/
+dist/
+.next/

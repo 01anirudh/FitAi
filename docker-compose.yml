@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Keycloak - Authentication Server
+  # ============================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.0
+    container_name: fitai-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - fitai-network
+
+  # ============================================
+  # RabbitMQ - Message Broker
+  # ============================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: fitai-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI
+    networks:
+      - fitai-network
+
+  # ============================================
+  # MongoDB - for Activity Service & AI Service
+  # ============================================
+  mongodb:
+    image: mongo:7.0
+    container_name: fitai-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - fitai-network
+
+  # ============================================
+  # PostgreSQL - for User Service
+  # ============================================
+  postgres:
+    image: postgres:16
+    container_name: fitai-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fitAIdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - fitai-network
+
+networks:
+  fitai-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  postgres-data:

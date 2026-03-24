@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        # User Service routes
+        - id: user-service-register
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/register
+          filters:
+            - StripPrefix=0
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+            # Forward the Keycloak subject claim as X-User-ID header
+            - AddRequestHeader=X-User-ID, {principal.name}
+
+        # Activity Service routes
+        - id: activity-service
+          uri: lb://acitvityservice
+          predicates:
+            - Path=/api/activities/**
+          filters:
+            - StripPrefix=0
+
+        # AI Service routes
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/recommendations/**
+          filters:
+            - StripPrefix=0
+
+      # Forward Authorization header to downstream services
+      default-filters:
+        - TokenRelay=
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak JWT issuer URI (update realm name if different)
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          # Alternative: use jwk-set-uri directly
+          # jwk-set-uri: http://localhost:8080/realms/fitness/protocol/openid-connect/certs
+
+server:
+  port: 9090
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG

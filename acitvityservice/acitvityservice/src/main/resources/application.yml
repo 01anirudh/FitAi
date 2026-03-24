@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: acitvityservice
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+      database: activities
+  rabbitmq:
+    uri: ${RABBITMQ_URI}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+server:
+  port: 8082
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+rabbitmq:
+  exchange:
+    name: fitness.exchange
+  queue:
+    name: activity.queue
+  routing:
+    key: activity.routing
