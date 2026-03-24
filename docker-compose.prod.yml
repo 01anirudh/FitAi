@@ -1,0 +1,89 @@
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: fitai-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8080:8080"
+
+  postgres:
+    image: postgres:16
+    container_name: fitai-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fitAIdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # ── Microservices ────────────────────────────────────────────────────────────
+
+  eureka:
+    build: ./eureka/eureka
+    container_name: fitai-eureka
+    ports:
+      - "8761:8761"
+
+  userservice:
+    build: ./userservice/userservice
+    container_name: fitai-userservice
+    depends_on:
+      - eureka
+      - postgres
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      EUREKA_URL: http://eureka:8761/eureka/
+    ports:
+      - "8081:8081"
+
+  acitvityservice:
+    build: ./acitvityservice/acitvityservice
+    container_name: fitai-activityservice
+    depends_on:
+      - eureka
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      EUREKA_URL: http://eureka:8761/eureka/
+    ports:
+      - "8082:8082"
+
+  aiservice:
+    build: ./aiservice/aiservice
+    container_name: fitai-aiservice
+    depends_on:
+      - eureka
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+      RABBITMQ_URI: ${RABBITMQ_URI}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      EUREKA_URL: http://eureka:8761/eureka/
+    ports:
+      - "8083:8083"
+
+  gateway:
+    build: ./gateway/gateway
+    container_name: fitai-gateway
+    depends_on:
+      - eureka
+      - keycloak
+    environment:
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      EUREKA_URL: http://eureka:8761/eureka/
+    ports:
+      - "9090:9090"
+
+volumes:
+  postgres-data:
