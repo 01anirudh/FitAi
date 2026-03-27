@@ -1,0 +1,16 @@
+FROM quay.io/keycloak/keycloak:25.0.0
+
+# Configure database vendor for PostgreSQL
+ENV KC_DB=postgres
+
+# Enable health checks (useful for Render health checks: /health/ready)
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+
+# Build the custom Keycloak installation to optimize startup time
+RUN /opt/keycloak/bin/kc.sh build
+
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+
+# Start intelligently using the optimized build
+CMD ["start", "--optimized"]
