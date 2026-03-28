@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { logActivity, getActivities } from '../api';
+import { syncUser, logActivity, getActivities } from '../api';
 import LogActivityForm from '../components/LogActivityForm';
 import ActivityFeed from '../components/ActivityFeed';
 import StatsPills from '../components/StatsPills';
@@ -14,6 +14,7 @@ export default function DashboardPage({ keycloak }) {
     setFeedLoading(true);
     setFeedError('');
     try {
+      await syncUser(keycloak.token); // Synchronize Keycloak user to local Neon DB automatically
       const data = await getActivities(keycloak.token);
       data.sort((a, b) => new Date(b.startTime || b.createdAt) - new Date(a.startTime || a.createdAt));
       setActivities(data);
