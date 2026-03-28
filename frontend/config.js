@@ -1,9 +1,9 @@
 // FitAI Frontend Configuration
 // Modify these values to match your local environment
 
-const CONFIG = {
-  gatewayUrl: "http://localhost:9090",         // Spring Cloud Gateway port
-  keycloakUrl: "http://localhost:8080",         // Keycloak server
-  keycloakRealm: "fitness",                     // Keycloak realm name
-  keycloakClientId: "fitness-app",              // Your Keycloak client ID (update if different)
-};
+export const CONFIG = {
+  gatewayUrl:      import.meta.env.VITE_GATEWAY_URL || "http://localhost:9090",
+  keycloakUrl:     import.meta.env.VITE_KEYCLOAK_URL || "http://localhost:8080",
+  keycloakRealm:   import.meta.env.VITE_KEYCLOAK_REALM || "fitness",
+  keycloakClientId:import.meta.env.VITE_KEYCLOAK_CLIENT_ID || "fitai-frontend",
+};;
