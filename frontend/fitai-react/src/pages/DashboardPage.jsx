@@ -4,16 +4,17 @@ import LogActivityForm from '../components/LogActivityForm';
 import ActivityFeed from '../components/ActivityFeed';
 import StatsPills from '../components/StatsPills';
 
-export default function DashboardPage({ token, username, onLogout }) {
+export default function DashboardPage({ keycloak }) {
   const [activities, setActivities] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedError, setFeedError]     = useState('');
 
   const fetchActivities = useCallback(async () => {
+    if (!keycloak.token) return;
     setFeedLoading(true);
     setFeedError('');
     try {
-      const data = await getActivities(token);
+      const data = await getActivities(keycloak.token);
       data.sort((a, b) => new Date(b.startTime || b.createdAt) - new Date(a.startTime || a.createdAt));
       setActivities(data);
     } catch (err) {
@@ -21,26 +22,28 @@ export default function DashboardPage({ token, username, onLogout }) {
     } finally {
       setFeedLoading(false);
     }
-  }, [token]);
+  }, [keycloak.token]);
 
   useEffect(() => { fetchActivities(); }, [fetchActivities]);
 
   async function handleLog(payload) {
-    await logActivity(token, payload);
+    if (keycloak.isTokenExpired()) {
+      await keycloak.updateToken(30);
+    }
+    await logActivity(keycloak.token, payload);
     fetchActivities();
   }
 
   return (
     <div className="dashboard">
-      {/* Navbar */}
       <nav className="navbar">
         <div className="nav-logo">
           <div className="logo-icon" style={{ width: 34, height: 34, fontSize: 17 }}>🏋️</div>
           <span className="logo-text">FitAI</span>
         </div>
         <div className="nav-user">
-          <span className="nav-greeting">Hello, <strong>{username}</strong> 👋</span>
-          <button className="btn-logout" onClick={onLogout}>Sign Out</button>
+          <span className="nav-greeting">Hello, <strong>{keycloak.tokenParsed?.preferred_username || 'Athlete'}</strong> 👋</span>
+          <button className="btn-logout" onClick={() => keycloak.logout()}>Sign Out</button>
         </div>
       </nav>
 
