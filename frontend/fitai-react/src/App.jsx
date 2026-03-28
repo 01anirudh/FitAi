@@ -1,30 +1,38 @@
-import React, { useState } from 'react';
-import LoginPage    from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import React, { useState, useEffect, useRef } from 'react';
+import Keycloak from 'keycloak-js';
+import { CONFIG } from './config';
 import DashboardPage from './pages/DashboardPage';
 
 export default function App() {
-  const [page, setPage]         = useState('login'); // 'login' | 'register' | 'dashboard'
-  const [token, setToken]       = useState(null);
-  const [username, setUsername] = useState('');
+  const [keycloak, setKeycloak] = useState(null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const isRun = useRef(false);
 
-  function handleLogin(accessToken, uname) {
-    setToken(accessToken);
-    setUsername(uname);
-    setPage('dashboard');
+  useEffect(() => {
+    if (isRun.current) return;
+    isRun.current = true;
+
+    const kc = new Keycloak({
+      url: CONFIG.keycloakUrl,
+      realm: CONFIG.keycloakRealm,
+      clientId: CONFIG.keycloakClientId,
+    });
+
+    kc.init({ onLoad: 'login-required', checkLoginIframe: false })
+      .then((auth) => {
+        setKeycloak(kc);
+        setAuthenticated(auth);
+      })
+      .catch(() => console.error("Keycloak initialization failed!"));
+  }, []);
+
+  if (!keycloak) {
+    return <div className="loading-screen" style={{color: 'white', textAlign: 'center', marginTop: '20vh'}}><h2>Loading Secure FitAI Login...</h2></div>;
   }
 
-  function handleLogout() {
-    setToken(null);
-    setUsername('');
-    setPage('login');
+  if (authenticated) {
+    return <DashboardPage keycloak={keycloak} />;
   }
 
-  if (page === 'dashboard' && token) {
-    return <DashboardPage token={token} username={username} onLogout={handleLogout} />;
-  }
-  if (page === 'register') {
-    return <RegisterPage onGoLogin={() => setPage('login')} />;
-  }
-  return <LoginPage onLogin={handleLogin} onGoRegister={() => setPage('register')} />;
+  return <div className="loading-screen" style={{color: 'white', textAlign: 'center', marginTop: '20vh'}}><h2>Unable to authenticate!</h2></div>;
 }
