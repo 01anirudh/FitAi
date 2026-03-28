@@ -1,5 +1,14 @@
 import { CONFIG } from './config';
 
+export async function syncUser(token) {
+  const res = await fetch(`${CONFIG.gatewayUrl}/api/users/sync`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to sync user');
+  return res.json();
+}
+
 export async function logActivity(token, payload) {
   const res = await fetch(`${CONFIG.gatewayUrl}/api/activities`, {
     method: 'POST',
