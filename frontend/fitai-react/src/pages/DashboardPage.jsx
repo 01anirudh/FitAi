@@ -4,7 +4,7 @@ import LogActivityForm from '../components/LogActivityForm';
 import ActivityFeed from '../components/ActivityFeed';
 import StatsPills from '../components/StatsPills';
 
-export default function DashboardPage({ keycloak }) {
+export default function DashboardPage({ keycloak, onLogout }) {
   const [activities, setActivities] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedError, setFeedError]     = useState('');
@@ -44,7 +44,7 @@ export default function DashboardPage({ keycloak }) {
         </div>
         <div className="nav-user">
           <span className="nav-greeting">Hello, <strong>{keycloak.tokenParsed?.preferred_username || 'Athlete'}</strong> 👋</span>
-          <button className="btn-logout" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>Sign Out</button>
+          <button className="btn-logout" onClick={onLogout}>Sign Out</button>
         </div>
       </nav>
 

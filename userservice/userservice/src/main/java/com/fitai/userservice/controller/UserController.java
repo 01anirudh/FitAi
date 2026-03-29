@@ -1,7 +1,9 @@
 package com.fitai.userservice.controller;
 
+import com.fitai.userservice.dto.KeycloakRegisterRequest;
 import com.fitai.userservice.dto.RegisterRequest;
 import com.fitai.userservice.dto.UserResopnse;
+import com.fitai.userservice.service.KeycloakAdminService;
 import com.fitai.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private UserService userService;
+    private KeycloakAdminService keycloakAdminService;
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResopnse> getUserProfile(@PathVariable String userId) {
@@ -49,5 +52,21 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.syncKeycloakUser(keycloakId, email, firstName, lastName)
         );
+    }
+    /**
+     * Public endpoint: create a new user in Keycloak (no JWT required).
+     * The local DB record is created automatically on first /sync after login.
+     */
+    @PostMapping("/keycloak-register")
+    public ResponseEntity<java.util.Map<String, String>> keycloakRegister(
+            @RequestBody KeycloakRegisterRequest request) {
+        keycloakAdminService.createUser(
+                request.getUsername(),
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPassword()
+        );
+        return ResponseEntity.ok(java.util.Map.of("message", "Account created successfully"));
     }
 }
