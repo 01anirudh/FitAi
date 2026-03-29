@@ -17,7 +17,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Allow user registration and health check without auth
-                        .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/keycloak-register").permitAll()
                         // User validation called internally by activity-service
                         .requestMatchers(HttpMethod.GET, "/api/users/*/validate").permitAll()
                         // All other requests need valid JWT
