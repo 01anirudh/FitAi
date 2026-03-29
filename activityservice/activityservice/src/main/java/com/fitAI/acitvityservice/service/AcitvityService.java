@@ -19,14 +19,11 @@ public class AcitvityService {
     private static final Logger log = LoggerFactory.getLogger(AcitvityService.class);
 
     private final ActivityRepository activityRepository;
-    private final UserValidationService userValidationService;
     private final RabbitTemplate rabbitTemplate;
 
     public AcitvityService(ActivityRepository activityRepository,
-                           UserValidationService userValidationService,
                            RabbitTemplate rabbitTemplate) {
         this.activityRepository = activityRepository;
-        this.userValidationService = userValidationService;
         this.rabbitTemplate = rabbitTemplate;
     }
 
@@ -38,14 +35,8 @@ public class AcitvityService {
 
     public ActivityResponse trackActivity(ActivityRequest request) {
 
-        boolean isValidUser = userValidationService.validateUser(request.getUserId());
-
-        if (!isValidUser) {
-            throw new RuntimeException("Invalid User: " + request.getUserId());
-        }
-
-        int calories = (request.getCaloriesBurned() != null && request.getCaloriesBurned() > 0) 
-                ? request.getCaloriesBurned() 
+        int calories = (request.getCaloriesBurned() != null && request.getCaloriesBurned() > 0)
+                ? request.getCaloriesBurned()
                 : calculateCaloriesBurned(String.valueOf(request.getType()), request.getDuration());
 
         Activity activity = Activity.builder()
