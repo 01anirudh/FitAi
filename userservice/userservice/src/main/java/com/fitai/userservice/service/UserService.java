@@ -7,7 +7,9 @@ import com.fitai.userservice.reposiroty.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -26,7 +28,6 @@ public class UserService {
 
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
 
@@ -49,6 +50,7 @@ public class UserService {
      * Uses the Keycloak subject UUID as the user's local ID so that
      * activity-service and ai-service can reference users by Keycloak ID.
      */
+    @Transactional
     public UserResopnse syncKeycloakUser(String keycloakId, String email,
                                           String firstName, String lastName) {
         // Case 1: User already synced via Keycloak — return existing record
@@ -71,16 +73,23 @@ public class UserService {
         }
 
         // Case 3: Completely new user — create local record
-        User user = new User();
-        user.setKeycloakId(keycloakId);
-        user.setEmail(email != null && !email.isBlank() ? email : keycloakId + "@keycloak.local");
-        user.setFirstName(firstName != null ? firstName : "");
-        user.setLastName(lastName != null ? lastName : "");
-        user.setPassword(""); // Auth handled by Keycloak
+        try {
+            User user = new User();
+            user.setKeycloakId(keycloakId);
+            user.setEmail(email != null && !email.isBlank() ? email : keycloakId + "@keycloak.local");
+            user.setFirstName(firstName != null ? firstName : "");
+            user.setLastName(lastName != null ? lastName : "");
 
-        User savedUser = repository.save(user);
-        log.info("Created new user from Keycloak sync: keycloakId={}, email={}", keycloakId, email);
-        return mapToResponse(savedUser);
+            User savedUser = repository.save(user);
+            log.info("Created new user from Keycloak sync: keycloakId={}, email={}", keycloakId, email);
+            return mapToResponse(savedUser);
+        } catch (DataIntegrityViolationException e) {
+            // Race condition: another concurrent request already inserted — just fetch it
+            log.warn("Duplicate insert race for keycloakId={}, fetching existing record", keycloakId);
+            return repository.findByKeycloakId(keycloakId)
+                    .map(this::mapToResponse)
+                    .orElseThrow(() -> new RuntimeException("User sync failed after duplicate key: " + keycloakId));
+        }
     }
 
     private UserResopnse mapToResponse(User user) {
