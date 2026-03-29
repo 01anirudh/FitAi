@@ -39,7 +39,7 @@ export default function DashboardPage({ keycloak }) {
     <div className="dashboard">
       <nav className="navbar">
         <div className="nav-logo">
-          <div className="logo-icon" style={{ width: 34, height: 34, fontSize: 17 }}>🏋️</div>
+          <img src="/favicon.svg" alt="FitAI Logo" style={{ width: 34, height: 34, borderRadius: 8 }} />
           <span className="logo-text">FitAI</span>
         </div>
         <div className="nav-user">
