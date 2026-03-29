@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -49,22 +51,36 @@ public class UserService {
      */
     public UserResopnse syncKeycloakUser(String keycloakId, String email,
                                           String firstName, String lastName) {
-        // If user already synced, return existing record
-        return repository.findByKeycloakId(keycloakId)
-                .map(this::mapToResponse)
-                .orElseGet(() -> {
-                    // Create new local user entry linked to Keycloak UUID
-                    User user = new User();
-                    user.setKeycloakId(keycloakId);
-                    user.setEmail(email != null ? email : "");
-                    user.setFirstName(firstName != null ? firstName : "");
-                    user.setLastName(lastName != null ? lastName : "");
-                    user.setPassword(""); // No local password — Keycloak handles auth
+        // Case 1: User already synced via Keycloak — return existing record
+        Optional<User> byKeycloakId = repository.findByKeycloakId(keycloakId);
+        if (byKeycloakId.isPresent()) {
+            return mapToResponse(byKeycloakId.get());
+        }
 
-                    User savedUser = repository.save(user);
-                    log.info("Synced new Keycloak user: keycloakId={}, email={}", keycloakId, email);
-                    return mapToResponse(savedUser);
-                });
+        // Case 2: User registered manually before (via /register) — link their keycloakId
+        if (email != null && !email.isBlank()) {
+            Optional<User> byEmail = repository.findByEmail(email);
+            if (byEmail.isPresent()) {
+                User existing = byEmail.get();
+                existing.setKeycloakId(keycloakId);
+                if (firstName != null && !firstName.isBlank()) existing.setFirstName(firstName);
+                if (lastName != null && !lastName.isBlank()) existing.setLastName(lastName);
+                log.info("Linked keycloakId={} to existing user email={}", keycloakId, email);
+                return mapToResponse(repository.save(existing));
+            }
+        }
+
+        // Case 3: Completely new user — create local record
+        User user = new User();
+        user.setKeycloakId(keycloakId);
+        user.setEmail(email != null && !email.isBlank() ? email : keycloakId + "@keycloak.local");
+        user.setFirstName(firstName != null ? firstName : "");
+        user.setLastName(lastName != null ? lastName : "");
+        user.setPassword(""); // Auth handled by Keycloak
+
+        User savedUser = repository.save(user);
+        log.info("Created new user from Keycloak sync: keycloakId={}, email={}", keycloakId, email);
+        return mapToResponse(savedUser);
     }
 
     private UserResopnse mapToResponse(User user) {
