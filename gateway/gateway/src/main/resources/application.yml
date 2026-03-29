@@ -13,22 +13,13 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
       routes:
-        # User Service routes
-        - id: user-service-register
-          uri: lb://user-service
-          predicates:
-            - Path=/api/users/register
-          filters:
-            - StripPrefix=0
-
+        # User Service routes — /register is public, rest require JWT (via SecurityConfig)
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/api/users/**
           filters:
             - StripPrefix=0
-            # Forward the Keycloak subject claim as X-User-ID header
-            - AddRequestHeader=X-User-ID, {principal.name}
 
         # Activity Service routes
         - id: activity-service
