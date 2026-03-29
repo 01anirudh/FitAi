@@ -44,7 +44,7 @@ export default function DashboardPage({ keycloak }) {
         </div>
         <div className="nav-user">
           <span className="nav-greeting">Hello, <strong>{keycloak.tokenParsed?.preferred_username || 'Athlete'}</strong> 👋</span>
-          <button className="btn-logout" onClick={() => keycloak.logout()}>Sign Out</button>
+          <button className="btn-logout" onClick={() => keycloak.logout({ redirectUri: window.location.origin })}>Sign Out</button>
         </div>
       </nav>
 
