@@ -1,26 +1,32 @@
 package com.fitai.userservice.service;
 
 import com.fitai.userservice.dto.RegisterRequest;
-import com.fitai.userservice.dto.UserResopnse;
+import com.fitai.userservice.dto.UserResponse;
 import com.fitai.userservice.model.User;
 import com.fitai.userservice.reposiroty.UserRepository;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository repository;
 
-    public UserResopnse registerUser(@Valid RegisterRequest request) {
+    public UserService(UserRepository repository) {
+        this.repository = repository;
+    }
+
+    public UserResponse registerUser(@Valid RegisterRequest request) {
 
         if (repository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
@@ -35,7 +41,7 @@ public class UserService {
         return mapToResponse(savedUser);
     }
 
-    public UserResopnse getUserProfile(String userId) {
+    public UserResponse getUserProfile(String userId) {
         User user = repository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
         return mapToResponse(user);
@@ -51,7 +57,7 @@ public class UserService {
      * activity-service and ai-service can reference users by Keycloak ID.
      */
     @Transactional
-    public UserResopnse syncKeycloakUser(String keycloakId, String email,
+    public UserResponse syncKeycloakUser(String keycloakId, String email,
                                           String firstName, String lastName) {
         // Case 1: User already synced via Keycloak — return existing record
         Optional<User> byKeycloakId = repository.findByKeycloakId(keycloakId);
@@ -92,8 +98,8 @@ public class UserService {
         }
     }
 
-    private UserResopnse mapToResponse(User user) {
-        UserResopnse response = new UserResopnse();
+    private UserResponse mapToResponse(User user) {
+        UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setEmail(user.getEmail());
         response.setFirstName(user.getFirstName());

@@ -2,7 +2,7 @@ spring:
   config:
     import: optional:file:../../.env[.properties]
   application:
-    name: acitvityservice
+    name: activityservice
   data:
     mongodb:
       uri: ${MONGODB_URI}

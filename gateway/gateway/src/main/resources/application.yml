@@ -23,7 +23,7 @@ spring:
 
         # Activity Service routes
         - id: activity-service
-          uri: lb://acitvityservice
+          uri: lb://activityservice
           predicates:
             - Path=/api/activities/**
           filters:

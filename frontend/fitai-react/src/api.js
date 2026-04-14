@@ -31,3 +31,19 @@ export async function getActivities(token) {
   if (!res.ok) throw new Error('Could not fetch activities.');
   return res.json();
 }
+
+export async function getRecommendations(token, userId) {
+  const res = await fetch(`${CONFIG.gatewayUrl}/api/recommendations/user/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Could not fetch recommendations.');
+  return res.json();
+}
+
+export async function getRecommendationForActivity(token, activityId) {
+  const res = await fetch(`${CONFIG.gatewayUrl}/api/recommendations/activity/${activityId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null; // recommendation may not exist yet
+  return res.json();
+}

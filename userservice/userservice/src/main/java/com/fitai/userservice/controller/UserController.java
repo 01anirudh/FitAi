@@ -2,11 +2,11 @@ package com.fitai.userservice.controller;
 
 import com.fitai.userservice.dto.KeycloakRegisterRequest;
 import com.fitai.userservice.dto.RegisterRequest;
-import com.fitai.userservice.dto.UserResopnse;
+import com.fitai.userservice.dto.UserResponse;
 import com.fitai.userservice.service.KeycloakAdminService;
 import com.fitai.userservice.service.UserService;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,19 +15,27 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
-@AllArgsConstructor
 public class UserController {
 
     private UserService userService;
     private KeycloakAdminService keycloakAdminService;
 
+    public UserController(UserService userService, KeycloakAdminService keycloakAdminService) {
+        this.userService = userService;
+        this.keycloakAdminService = keycloakAdminService;
+    }
+
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResopnse> getUserProfile(@PathVariable String userId) {
+    public ResponseEntity<UserResponse> getUserProfile(@PathVariable String userId) {
         return ResponseEntity.ok(userService.getUserProfile(userId));
     }
 
+    /**
+     * @deprecated Internal/legacy endpoint — use /keycloak-register for new registrations.
+     * Requires JWT to prevent unauthenticated access.
+     */
     @PostMapping("/register")
-    public ResponseEntity<UserResopnse> registerUser(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(userService.registerUser(request));
     }
 
@@ -42,7 +50,7 @@ public class UserController {
      * The Keycloak subject (UUID) is used as the stored userId.
      */
     @PostMapping("/sync")
-    public ResponseEntity<UserResopnse> syncKeycloakUser(
+    public ResponseEntity<UserResponse> syncKeycloakUser(
             @AuthenticationPrincipal Jwt jwt) {
         String keycloakId = jwt.getSubject();
         String email = jwt.getClaimAsString("email");

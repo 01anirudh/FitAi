@@ -2,7 +2,7 @@ package com.fitness.aiservice.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -11,9 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
-@Slf4j
 public class GeminiAIService {
+
+    private static final Logger log = LoggerFactory.getLogger(GeminiAIService.class);
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -41,8 +45,9 @@ public class GeminiAIService {
             );
 
             String response = restClient.post()
-                    .uri(GEMINI_API_URL + "?key=" + geminiApiKey)
+                    .uri(GEMINI_API_URL)
                     .header("Content-Type", "application/json")
+                    .header("x-goog-api-key", geminiApiKey)
                     .body(requestBody)
                     .retrieve()
                     .body(String.class);

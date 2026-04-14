@@ -19,11 +19,11 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         // Allow all CORS preflight requests
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Allow user registration without auth
-                        .pathMatchers(HttpMethod.POST, "/api/users/register", "/api/users/keycloak-register").permitAll()
+                        // Allow Keycloak-based user registration without auth
+                        .pathMatchers(HttpMethod.POST, "/api/users/keycloak-register").permitAll()
                         // Allow GET on user profile validation without auth (internal call)
                         .pathMatchers(HttpMethod.GET, "/api/users/*/validate").permitAll()
-                        // Secure all other endpoints
+                        // Secure all other endpoints (including legacy /register)
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

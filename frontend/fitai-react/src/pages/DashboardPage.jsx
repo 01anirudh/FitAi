@@ -3,6 +3,7 @@ import { syncUser, logActivity, getActivities } from '../api';
 import LogActivityForm from '../components/LogActivityForm';
 import ActivityFeed from '../components/ActivityFeed';
 import StatsPills from '../components/StatsPills';
+import AIRecommendations from '../components/AIRecommendations';
 
 export default function DashboardPage({ keycloak, onLogout }) {
   const [activities, setActivities] = useState([]);
@@ -60,6 +61,14 @@ export default function DashboardPage({ keycloak, onLogout }) {
             onRefresh={fetchActivities}
           />
         </div>
+
+        {/* AI Recommendations panel — shows after activities load */}
+        {!feedLoading && activities.length > 0 && (
+          <AIRecommendations
+            activities={activities}
+            token={keycloak.token}
+          />
+        )}
       </div>
     </div>
   );

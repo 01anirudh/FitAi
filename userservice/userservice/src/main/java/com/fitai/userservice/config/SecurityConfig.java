@@ -16,11 +16,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Allow user registration and health check without auth
-                        .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/keycloak-register").permitAll()
+                        // Allow Keycloak registration and health check without auth
+                        .requestMatchers(HttpMethod.POST, "/api/users/keycloak-register").permitAll()
                         // User validation called internally by activity-service
                         .requestMatchers(HttpMethod.GET, "/api/users/*/validate").permitAll()
-                        // All other requests need valid JWT
+                        // All other requests (including legacy /register) need valid JWT
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

@@ -42,12 +42,13 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       EUREKA_URL: http://eureka:8761/eureka/
     ports:
       - "8081:8081"
 
-  acitvityservice:
-    build: ./acitvityservice/acitvityservice
+  activityservice:
+    build: ./activityservice/activityservice
     container_name: fitai-activityservice
     depends_on:
       - eureka

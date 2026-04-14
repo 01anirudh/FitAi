@@ -3,20 +3,27 @@ package com.fitness.aiservice.service;
 import com.fitness.aiservice.model.Activity;
 import com.fitness.aiservice.model.Recommendation;
 import com.fitness.aiservice.repository.RecommendationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ActivityMessageListener {
+
+    private static final Logger log = LoggerFactory.getLogger(ActivityMessageListener.class);
 
     private final RecommendationRepository recommendationRepository;
     private final GeminiAIService geminiAIService;
+
+    public ActivityMessageListener(RecommendationRepository recommendationRepository, GeminiAIService geminiAIService) {
+        this.recommendationRepository = recommendationRepository;
+        this.geminiAIService = geminiAIService;
+    }
 
     @RabbitListener(queues = "${rabbitmq.queue.name}")
     public void receiveActivityMessage(Activity activity) {
@@ -41,16 +48,15 @@ public class ActivityMessageListener {
                     geminiAIService.parseRecommendationResponse(rawAiResponse);
 
             // Save recommendation to MongoDB
-            Recommendation recommendation = Recommendation.builder()
-                    .activityId(activity.getId())
-                    .userId(activity.getUserId())
-                    .activityType(activity.getType())
-                    .recommendation(parsed.recommendation())
-                    .improvements(parsed.improvements())
-                    .suggestions(parsed.suggestions())
-                    .safety(parsed.safety())
-                    .createdAt(LocalDateTime.now())
-                    .build();
+            Recommendation recommendation = new Recommendation();
+            recommendation.setActivityId(activity.getId());
+            recommendation.setUserId(activity.getUserId());
+            recommendation.setActivityType(activity.getType());
+            recommendation.setRecommendation(parsed.recommendation());
+            recommendation.setImprovements(parsed.improvements());
+            recommendation.setSuggestions(parsed.suggestions());
+            recommendation.setSafety(parsed.safety());
+            recommendation.setCreatedAt(LocalDateTime.now());
 
             recommendationRepository.save(recommendation);
             log.info("Saved recommendation for activityId={}", activity.getId());
