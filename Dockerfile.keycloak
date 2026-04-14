@@ -1,0 +1,7 @@
+FROM quay.io/keycloak/keycloak:25.0.0
+
+# Expose Keycloak port
+EXPOSE 8080
+
+# Start in dev mode (no TLS required, suitable for Railway with reverse proxy)
+CMD ["start-dev"]
