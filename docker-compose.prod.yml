@@ -1,8 +1,8 @@
 services:
-  # ── Infrastructure ──────────────────────────────────────────────────────────
+  # ── Auth ────────────────────────────────────────────────────────────────────
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.1
+    image: quay.io/keycloak/keycloak:25.0.0
     container_name: fitai-keycloak
     command: start-dev
     environment:
@@ -10,33 +10,29 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     ports:
       - "8080:8080"
+    networks:
+      - fitai-network
+    restart: unless-stopped
 
-  postgres:
-    image: postgres:16
-    container_name: fitai-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-fitAIdb}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  # ── Microservices ────────────────────────────────────────────────────────────
+  # ── Service Registry ─────────────────────────────────────────────────────────
 
   eureka:
     build: ./eureka/eureka
     container_name: fitai-eureka
     ports:
       - "8761:8761"
+    networks:
+      - fitai-network
+    restart: unless-stopped
+
+  # ── Microservices ────────────────────────────────────────────────────────────
 
   userservice:
     build: ./userservice/userservice
     container_name: fitai-userservice
     depends_on:
       - eureka
-      - postgres
+      - keycloak
     environment:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
@@ -46,6 +42,9 @@ services:
       EUREKA_URL: http://eureka:8761/eureka/
     ports:
       - "8081:8081"
+    networks:
+      - fitai-network
+    restart: unless-stopped
 
   activityservice:
     build: ./activityservice/activityservice
@@ -59,6 +58,9 @@ services:
       EUREKA_URL: http://eureka:8761/eureka/
     ports:
       - "8082:8082"
+    networks:
+      - fitai-network
+    restart: unless-stopped
 
   aiservice:
     build: ./aiservice/aiservice
@@ -73,6 +75,9 @@ services:
       EUREKA_URL: http://eureka:8761/eureka/
     ports:
       - "8083:8083"
+    networks:
+      - fitai-network
+    restart: unless-stopped
 
   gateway:
     build: ./gateway/gateway
@@ -85,6 +90,32 @@ services:
       EUREKA_URL: http://eureka:8761/eureka/
     ports:
       - "9090:9090"
+    networks:
+      - fitai-network
+    restart: unless-stopped
+
+  # ── React Frontend ───────────────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./frontend/fitai-react
+      args:
+        VITE_GATEWAY_URL: ${VITE_GATEWAY_URL}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-fitai-db}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-fitai-frontend}
+    container_name: fitai-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - gateway
+    networks:
+      - fitai-network
+    restart: unless-stopped
+
+networks:
+  fitai-network:
+    driver: bridge
 
 volumes:
   postgres-data:
