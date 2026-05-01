@@ -3,6 +3,7 @@
 *.env
 .env.local
 .env.production
+.env.aws
 
 # Spring Boot local config overrides
 application-local.yml
