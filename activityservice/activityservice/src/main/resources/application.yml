@@ -9,6 +9,9 @@ spring:
       database: activities
   rabbitmq:
     uri: ${RABBITMQ_URI}
+    ssl:
+      enabled: true
+      validate-server-certificate: false
   security:
     oauth2:
       resourceserver:
