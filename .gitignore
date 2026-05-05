@@ -37,3 +37,6 @@ dist/
 # Local test reports (not part of source)
 TEST_REPORT.md
 USER_REGISTRATION_LOGIN_TEST.md
+
+amazon-ec2
+*.pem
