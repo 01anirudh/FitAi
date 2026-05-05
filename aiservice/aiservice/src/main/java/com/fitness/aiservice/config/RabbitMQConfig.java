@@ -4,6 +4,7 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -23,6 +24,22 @@ public class RabbitMQConfig {
 
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
+
+    @Value("${spring.rabbitmq.uri}")
+    private String rabbitmqUri;
+
+    /**
+     * Explicitly configure ConnectionFactory from the full amqps:// URI with SSL.
+     * Spring Boot's auto-config does not correctly extract the host from amqps:// URIs,
+     * always falling back to localhost. This bean overrides that behaviour.
+     */
+    @Bean
+    public CachingConnectionFactory connectionFactory() throws Exception {
+        com.rabbitmq.client.ConnectionFactory rabbitFactory = new com.rabbitmq.client.ConnectionFactory();
+        rabbitFactory.setUri(rabbitmqUri);   // parses host, port, user, password, vhost
+        rabbitFactory.useSslProtocol();      // enables TLS for amqps://
+        return new CachingConnectionFactory(rabbitFactory);
+    }
 
     @Bean
     public Queue activityQueue() {
