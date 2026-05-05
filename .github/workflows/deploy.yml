@@ -1,0 +1,39 @@
+name: Deploy FitAI to AWS EC2
+
+on:
+  push:
+    branches:
+      - main   # triggers on every push to main
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout code ──────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. SSH into EC2 and deploy ────────────────────────────────────────
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "📦 Pulling latest code..."
+            cd ~/FitAi
+            git pull origin main
+
+            echo "🐳 Rebuilding and restarting all services..."
+            docker compose -f docker-compose.prod.yml up --build -d
+
+            echo "🧹 Cleaning up unused Docker images..."
+            docker image prune -f
+
+            echo "✅ Deployment complete!"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
